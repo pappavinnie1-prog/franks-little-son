@@ -20,7 +20,7 @@ const client = new Client({
   ]
 });
 
-const ROLE_NAME = "Frank's Keys I Operations Director";
+const ROLE_NAME = "Frank's Keys | Owner";
 const LOG_CHANNEL_NAME = "📃sales-log";
 
 const commands = [
