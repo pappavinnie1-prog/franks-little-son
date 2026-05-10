@@ -14,10 +14,12 @@ const {
 
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.DirectMessages
-  ]
+  GatewayIntentBits.Guilds,
+  GatewayIntentBits.GuildMembers,
+  GatewayIntentBits.GuildMessages,
+  GatewayIntentBits.MessageContent,
+  GatewayIntentBits.DirectMessages
+]
 });
 
 const ROLE_NAME = "Frank's Keys | Owner";
@@ -177,5 +179,28 @@ client.on("interactionCreate", async interaction => {
     });
   }
 });
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+  if (message.content.toLowerCase() !== "!buy") return;
 
+  if (!message.member.roles.cache.some(r => r.name === "Sales Team")) {
+    return;
+  }
+
+  await message.channel.send(
+`📌 **How To Buy**
+
+• Go To The Store
+• Sign In / Connect Your Account On The Website
+• Go To The Gift Cards Category And Select **Custom Gift Card**
+• Select Your **Budget / Amount**
+• Copy And Paste My Email In The Recipient Field
+• **Send Proof Once Purchased**
+• Once Received, **Your Key Will Be Sent**
+
+**Email:** franklinskeys@gmail.com
+
+— **Frank's Keys 🔑**`
+  );
+});
 client.login(process.env.TOKEN);
