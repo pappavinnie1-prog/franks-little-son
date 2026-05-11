@@ -1,4 +1,5 @@
 require("dotenv").config();
+const fs = require("fs");
 const {
   Client,
   GatewayIntentBits,
@@ -141,7 +142,33 @@ client.on("interactionCreate", async interaction => {
 
     if (action === "approve") {
       description += `\n**Approved By:** ${interaction.user} ✅`;
+const sellerMatch = oldEmbed.description.match(/\*\*Logged By:\*\* <@(\d+)>/);
+const packageMatch = oldEmbed.description.match(/\*\*Package:\*\* (.+)/);
+const amountMatch = oldEmbed.description.match(/\*\*Amount Charged:\*\* (.+)/);
 
+const sellerId = sellerMatch ? sellerMatch[1] : "Unknown";
+const packageName = packageMatch ? packageMatch[1] : "Unknown";
+const amount = amountMatch ? amountMatch[1] : "Unknown";
+
+let salesData = [];
+
+try {
+  salesData = JSON.parse(fs.readFileSync("sales.json", "utf8"));
+} catch {
+  salesData = [];
+}
+
+salesData.push({
+  sellerId: sellerId,
+  sellerTag: interaction.guild.members.cache.get(sellerId)?.user.tag || "Unknown",
+  customerId: customerId,
+  package: packageName,
+  amount: amount,
+  approvedBy: interaction.user.tag,
+  approvedAt: new Date().toISOString()
+});
+
+fs.writeFileSync("sales.json", JSON.stringify(salesData, null, 2));
       try {
         const user = await client.users.fetch(customerId);
         await user.send(
