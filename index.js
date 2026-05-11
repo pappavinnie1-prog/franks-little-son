@@ -123,10 +123,12 @@ client.on("interactionCreate", async interaction => {
         components: [row]
       });
 
-      await interaction.reply({
-        content: "Sale logged successfully.",
-        ephemeral: true
-      });
+  await interaction.reply({
+  content: "Sale logged successfully.",
+  ephemeral: true
+});
+
+return;
     }
   }
 
