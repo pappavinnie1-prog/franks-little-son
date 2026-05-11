@@ -1,5 +1,6 @@
 require("dotenv").config();
 const fs = require("fs");
+
 const {
   Client,
   GatewayIntentBits,
@@ -9,18 +10,17 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle,
-  PermissionsBitField
+  ButtonStyle
 } = require("discord.js");
 
 const client = new Client({
   intents: [
-  GatewayIntentBits.Guilds,
-  GatewayIntentBits.GuildMembers,
-  GatewayIntentBits.GuildMessages,
-  GatewayIntentBits.MessageContent,
-  GatewayIntentBits.DirectMessages
-]
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.DirectMessages
+  ]
 });
 
 const ROLE_NAME = "Frank's Keys | Owner";
@@ -62,19 +62,24 @@ const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
       ),
       { body: commands }
     );
+
     console.log("Slash command registered.");
   } catch (err) {
     console.error(err);
   }
 })();
 
-client.on("ready", () => {
+client.once("ready", () => {
   console.log(`${client.user.tag} is online.`);
 });
 
 client.on("interactionCreate", async interaction => {
+
+  // SLASH COMMAND
   if (interaction.isChatInputCommand()) {
+
     if (interaction.commandName === "logsale") {
+
       const customer = interaction.options.getUser("customer");
       const packageName = interaction.options.getString("package");
       const amount = interaction.options.getString("amount");
@@ -125,7 +130,9 @@ client.on("interactionCreate", async interaction => {
     }
   }
 
+  // BUTTONS
   if (interaction.isButton()) {
+
     const member = interaction.member;
 
     if (!member.roles.cache.some(r => r.name === ROLE_NAME)) {
@@ -138,52 +145,68 @@ client.on("interactionCreate", async interaction => {
     const [action, customerId] = interaction.customId.split("_");
 
     const oldEmbed = interaction.message.embeds[0];
+
     let description = oldEmbed.description;
 
     if (action === "approve") {
+
       description += `\n**Approved By:** ${interaction.user} ✅`;
-const sellerMatch = oldEmbed.description.match(/\*\*Logged By:\*\* <@(\d+)>/);
-const packageMatch = oldEmbed.description.match(/\*\*Package:\*\* (.+)/);
-const amountMatch = oldEmbed.description.match(/\*\*Amount Charged:\*\* (.+)/);
 
-const sellerId = sellerMatch ? sellerMatch[1] : "Unknown";
-const packageName = packageMatch ? packageMatch[1] : "Unknown";
-const amount = amountMatch ? amountMatch[1] : "Unknown";
+      // SALES TRACKING
+      const sellerMatch = oldEmbed.description.match(/\*\*Logged By:\*\* <@!?(\d+)>/);
+      const packageMatch = oldEmbed.description.match(/\*\*Package:\*\* (.+)/);
+      const amountMatch = oldEmbed.description.match(/\*\*Amount Charged:\*\* (.+)/);
 
-let salesData = [];
+      const sellerId = sellerMatch ? sellerMatch[1] : "Unknown";
+      const savedPackage = packageMatch ? packageMatch[1] : "Unknown";
+      const savedAmount = amountMatch ? amountMatch[1] : "Unknown";
 
-try {
-  salesData = JSON.parse(fs.readFileSync("sales.json", "utf8"));
-} catch {
-  salesData = [];
-}
+      let salesData = [];
 
-salesData.push({
-  sellerId: sellerId,
-  sellerTag: interaction.guild.members.cache.get(sellerId)?.user.tag || "Unknown",
-  customerId: customerId,
-  package: packageName,
-  amount: amount,
-  approvedBy: interaction.user.tag,
-  approvedAt: new Date().toISOString()
-});
+      try {
+        salesData = JSON.parse(fs.readFileSync("sales.json", "utf8"));
+      } catch {
+        salesData = [];
+      }
 
-fs.writeFileSync("sales.json", JSON.stringify(salesData, null, 2));
+      salesData.push({
+        sellerId: sellerId,
+        sellerTag:
+          interaction.guild.members.cache.get(sellerId)?.user.tag || "Unknown",
+        customerId: customerId,
+        package: savedPackage,
+        amount: savedAmount,
+        approvedBy: interaction.user.tag,
+        approvedAt: new Date().toISOString()
+      });
+
+      fs.writeFileSync(
+        "sales.json",
+        JSON.stringify(salesData, null, 2)
+      );
+
+      console.log("Sale saved to sales.json");
+
       try {
         const user = await client.users.fetch(customerId);
+
         await user.send(
           "✅ Your Frank's Keys purchase has been approved. Thank you!"
         );
+
       } catch {}
 
     } else {
+
       description += `\n**Declined By:** ${interaction.user} ❌`;
 
       try {
         const user = await client.users.fetch(customerId);
+
         await user.send(
           "❌ Your Frank's Keys purchase was declined."
         );
+
       } catch {}
     }
 
@@ -191,13 +214,20 @@ fs.writeFileSync("sales.json", JSON.stringify(salesData, null, 2));
       .setDescription(
         description.replace(
           "**Status:** Pending ⏳",
-          `**Status:** ${action === "approve" ? "Approved ✅" : "Declined ❌"}`
+          `**Status:** ${action === "approve"
+            ? "Approved ✅"
+            : "Declined ❌"}`
         )
       );
 
     const disabledRow = new ActionRowBuilder().addComponents(
-      ButtonBuilder.from(interaction.message.components[0].components[0]).setDisabled(true),
-      ButtonBuilder.from(interaction.message.components[0].components[1]).setDisabled(true)
+      ButtonBuilder
+        .from(interaction.message.components[0].components[0])
+        .setDisabled(true),
+
+      ButtonBuilder
+        .from(interaction.message.components[0].components[1])
+        .setDisabled(true)
     );
 
     await interaction.update({
@@ -206,8 +236,12 @@ fs.writeFileSync("sales.json", JSON.stringify(salesData, null, 2));
     });
   }
 });
+
+// !BUY COMMAND
 client.on("messageCreate", async (message) => {
+
   if (message.author.bot) return;
+
   if (message.content.toLowerCase() !== "!buy") return;
 
   if (!message.member.roles.cache.some(r => r.name === "Sales Team")) {
@@ -230,4 +264,5 @@ client.on("messageCreate", async (message) => {
 — **Frank's Keys 🔑**`
   );
 });
+
 client.login(process.env.TOKEN);
