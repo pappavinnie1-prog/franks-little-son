@@ -1,5 +1,4 @@
 require("dotenv").config();
-const fs = require("fs");
 
 const {
   Client,
@@ -123,12 +122,12 @@ client.on("interactionCreate", async interaction => {
         components: [row]
       });
 
-  await interaction.reply({
-  content: "Sale logged successfully.",
-  ephemeral: true
-});
+      await interaction.reply({
+        content: "Sale logged successfully.",
+        ephemeral: true
+      });
 
-return;
+      return;
     }
   }
 
@@ -153,41 +152,6 @@ return;
     if (action === "approve") {
 
       description += `\n**Approved By:** ${interaction.user} ✅`;
-
-      // SALES TRACKING
-      const sellerMatch = oldEmbed.description.match(/\*\*Logged By:\*\* <@!?(\d+)>/);
-      const packageMatch = oldEmbed.description.match(/\*\*Package:\*\* (.+)/);
-      const amountMatch = oldEmbed.description.match(/\*\*Amount Charged:\*\* (.+)/);
-
-      const sellerId = sellerMatch ? sellerMatch[1] : "Unknown";
-      const savedPackage = packageMatch ? packageMatch[1] : "Unknown";
-      const savedAmount = amountMatch ? amountMatch[1] : "Unknown";
-
-      let salesData = [];
-
-      try {
-        salesData = JSON.parse(fs.readFileSync("sales.json", "utf8"));
-      } catch {
-        salesData = [];
-      }
-
-      salesData.push({
-        sellerId: sellerId,
-        sellerTag:
-          interaction.guild.members.cache.get(sellerId)?.user.tag || "Unknown",
-        customerId: customerId,
-        package: savedPackage,
-        amount: savedAmount,
-        approvedBy: interaction.user.tag,
-        approvedAt: new Date().toISOString()
-      });
-
-      fs.writeFileSync(
-        "sales.json",
-        JSON.stringify(salesData, null, 2)
-      );
-
-      console.log("Sale saved to sales.json");
 
       try {
         const user = await client.users.fetch(customerId);
